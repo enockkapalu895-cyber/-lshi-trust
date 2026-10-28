@@ -1,55 +1,96 @@
 import streamlit as st
-from datetime import datetime, timedelta
 import pandas as pd
+from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Lshi Trust", page_icon="💰", layout="centered")
 
-ADMIN_PASSWORD = "Lshi2026"
-
+# --- MEMOIRE ---
+if "users" not in st.session_state:
+    st.session_state.users = []
 if "epargnes" not in st.session_state:
     st.session_state.epargnes = []
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
-st.title("Lshi Trust 💰")
-st.subheader("Épargne sécurisée à Lubumbashi")
+CODE_PATRON = "Lshi2026"
+ADMIN_EMAIL = "enockkapalu895@gmail.com"
 
-with st.sidebar:
-    st.header("🔐 Espace Patron")
-    code = st.text_input("Code Admin", type="password")
-    if st.button("Ouvrir mon cahier"):
-        if code == ADMIN_PASSWORD:
-            st.session_state.is_admin = True
-            st.success("Code correct !")
-        else:
-            st.error("Code faux ! C'est Lshi2026")
-    
-    if st.session_state.is_admin:
-        st.success("Bienvenue Patron Enock !")
-        if st.button("Se déconnecter"):
-            st.session_state.is_admin = False
-            st.rerun()
+def trouver_user(email):
+    for u in st.session_state.users:
+        if u["email"].lower() == email.lower():
+            return u
+    return None
 
-if not st.session_state.is_admin:
-    st.markdown("Bienvenue ! Épargne ici.")
-    with st.form("client_form"):
-        nom = st.text_input("Ton nom complet")
-        montant = st.number_input("Montant (CDF)", min_value=5000, step=1000)
-        duree = st.selectbox("Durée", ["2 semaines (Bonus 3%)", "1 mois (Bonus 5%)", "3 mois (Bonus 10%)"])
-        btn = st.form_submit_button("💰 Épargner maintenant")
-        if btn and nom and montant:
-            pct = {"2 semaines (Bonus 3%)":0.03, "1 mois (Bonus 5%)":0.05, "3 mois (Bonus 10%)":0.10}[duree]
-            jours = {"2 semaines (Bonus 3%)":14, "1 mois (Bonus 5%)":30, "3 mois (Bonus 10%)":90}[duree]
-            total = int(montant * (1+pct))
-            date_retour = datetime.now() + timedelta(days=jours)
-            st.session_state.epargnes.append({"Nom":nom, "Montant":montant, "Total":total, "Retour":date_retour.strftime("%d/%m/%Y")})
-            st.success(f"Merci {nom} ! Reçu {montant} CDF. Tu recevras {total} CDF le {date_retour.strftime('%d/%m/%Y')}")
+# =================================================
+# PAGE 1 : SI PAS CONNECTÉ -> INSCRIPTION OBLIGATOIRE
+# =================================================
+if not st.session_state.logged_in and not st.session_state.is_admin:
+    st.title("Lshi Trust 💰")
+    st.subheader("Bienvenue à Lubumbashi")
+    st.write("Avant d'épargner, crée ton compte sécurisé")
+
+    tab_inscrit, tab_connect, tab_patron = st.tabs(["📝 S'inscrire", "🔐 Se connecter", "👑 Patron"])
+
+    with tab_inscrit:
+        st.markdown("### Créer un compte")
+        
+        # BOUTON GOOGLE (visuel)
+        if st.button("🔵 Continuer avec Google", use_container_width=True):
+            st.info("Connexion Google bientôt disponible ! Pour l'instant, inscris-toi avec ton email ci-dessous 👇")
+        
+        st.divider()
+        st.write("Ou avec email :")
+        
+        nom = st.text_input("Nom complet", key="ins_nom")
+        email = st.text_input("Ton Email Gmail", key="ins_email")
+        whatsapp = st.text_input("Numéro WhatsApp", key="ins_what")
+        mdp = st.text_input("Crée un mot de passe", type="password", key="ins_mdp1")
+        mdp2 = st.text_input("Confirme mot de passe", type="password", key="ins_mdp2")
+
+        if st.button("S'inscrire maintenant", use_container_width=True):
+            if not nom or not email or not mdp:
+                st.error("Remplis tout chef")
+            elif mdp != mdp2:
+                st.error("Les 2 mots de passe ne sont pas les mêmes")
+            elif trouver_user(email):
+                st.error("Ce compte existe déjà, va dans 'Se connecter'")
+            else:
+                st.session_state.users.append({"nom":nom, "email":email, "whatsapp":whatsapp, "password":mdp})
+                st.success("✅ Compte créé ! Va maintenant dans 'Se connecter' pour entrer")
+                st.balloons()
+
+    with tab_connect:
+        st.markdown("### Connexion Client")
+        email_login = st.text_input("Ton Email", key="log_email")
+        mdp_login = st.text_input("Mot de passe", type="password", key="log_mdp")
+        if st.button("Entrer dans Lshi Trust", use_container_width=True):
+            user = trouver_user(email_login)
+            if user and user["password"] == mdp_login:
+                st.session_state.logged_in = True
+                st.session_state.current_user = user
+                st.rerun()
+            else:
+                st.error("Email ou mot de passe incorrect")
+
+    with tab_patron:
+        st.markdown("### Espace Patron")
+        code = st.text_input("Code Admin", type="password", key="patron_code")
+        if st.button("Ouvrir mon cahier"):
+            if code == CODE_PATRON:
+                st.session_state.is_admin = True
+                st.rerun()
+            else:
+                st.error("Code incorrect")
+
+# =================================================
+# PAGE 2 : SI CONNECTÉ -> ACCUEIL ÉPARGNE
+# =================================================
 else:
-    st.header("📊 CAHIER DU PATRON - CONFIDENTIEL")
-    st.warning("Seulement toi vois ça")
-    if st.session_state.epargnes:
-        df = pd.DataFrame(st.session_state.epargnes)
-        st.dataframe(df, use_container_width=True)
-        st.metric("Total épargné", f"{df['Montant'].sum()} CDF")
-    else:
-        st.info("Pas encore d'épargnes")
+    # BOUTON DECONNEXION
+    col1, col2 = st.columns([3,1])
+    with col1:
+       
