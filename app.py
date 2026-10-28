@@ -8,6 +8,8 @@ ADMIN_PASSWORD = "Lshi2026"
 
 if "epargnes" not in st.session_state:
     st.session_state.epargnes = []
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
 
 st.title("Lshi Trust 💰")
 st.subheader("Épargne sécurisée à Lubumbashi")
@@ -15,11 +17,20 @@ st.subheader("Épargne sécurisée à Lubumbashi")
 with st.sidebar:
     st.header("🔐 Espace Patron")
     code = st.text_input("Code Admin", type="password")
-    is_admin = (code == ADMIN_PASSWORD)
-    if is_admin:
+    if st.button("Ouvrir mon cahier"):
+        if code == ADMIN_PASSWORD:
+            st.session_state.is_admin = True
+            st.success("Code correct !")
+        else:
+            st.error("Code faux ! C'est Lshi2026")
+    
+    if st.session_state.is_admin:
         st.success("Bienvenue Patron Enock !")
+        if st.button("Se déconnecter"):
+            st.session_state.is_admin = False
+            st.rerun()
 
-if not is_admin:
+if not st.session_state.is_admin:
     st.markdown("Bienvenue ! Épargne ici.")
     with st.form("client_form"):
         nom = st.text_input("Ton nom complet")
@@ -35,6 +46,7 @@ if not is_admin:
             st.success(f"Merci {nom} ! Reçu {montant} CDF. Tu recevras {total} CDF le {date_retour.strftime('%d/%m/%Y')}")
 else:
     st.header("📊 CAHIER DU PATRON - CONFIDENTIEL")
+    st.warning("Seulement toi vois ça")
     if st.session_state.epargnes:
         df = pd.DataFrame(st.session_state.epargnes)
         st.dataframe(df, use_container_width=True)
