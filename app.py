@@ -1,8 +1,17 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 from datetime import datetime, timedelta
 import json
 import os
+
+# ===== CODE ADSENSE - DOIT ETRE TOUT EN HAUT =====
+# Google va chercher ce script pour valider lshitrust.streamlit.app
+components.html("""
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3622864122301359"
+     crossorigin="anonymous"></script>
+""", height=0)
+# =================================================
 
 st.set_page_config(page_title="Lshi Trust", page_icon="💰", layout="centered")
 
@@ -30,6 +39,23 @@ def save_data(data):
         json.dump(data, f, indent=2)
 
 st.markdown("<h1 style='text-align:center; color:#FF6B00;'>💰 Lshi Trust</h1><p style='text-align:center;'>Épargne sécurisée Lubumbashi - Convertie en Bitcoin</p>", unsafe_allow_html=True)
+
+# PUB - S'AFFICHERA AUTOMATIQUEMENT APRES VALIDATION GOOGLE
+st.markdown("---")
+components.html("""
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3622864122301359"
+     crossorigin="anonymous"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-3622864122301359"
+     data-ad-slot="auto"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+""", height=250)
+st.markdown("---")
 
 tab1, tab2, tab3 = st.tabs(["👤 Client", "📝 S'inscrire", "👑 Patron"])
 
@@ -72,7 +98,6 @@ with tab1:
         st.markdown(f"Sera converti en : {btc_estime:.6f} BTC (~${usd_estime:.2f})")
         st.markdown(f"Tu recevras le {date_retour} : {montant*1.03:.0f} CDF (+3% benefice)")
         
-
         if st.button("J'ai envoye, valider"):
             if not tx_id:
                 st.error("Colle l'ID transaction !")
