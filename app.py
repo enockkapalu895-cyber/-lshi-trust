@@ -71,7 +71,7 @@ with tab1:
 
         st.markdown(f"Sera converti en : {btc_estime:.6f} BTC (~${usd_estime:.2f})")
         st.markdown(f"Tu recevras le {date_retour} : {montant*1.03:.0f} CDF (+3% benefice)")
-        st.code(f"Adresse BTC Patron: {TRUST_WALLET_BTC}", language="text")
+        
 
         if st.button("J'ai envoye, valider"):
             if not tx_id:
